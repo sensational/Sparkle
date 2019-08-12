@@ -10,6 +10,25 @@ import Foundation
 import Security
 
 func findKeys() -> (Data, Data) {
+
+    let args = CommandLine.arguments;
+    if args.count == 3 {
+        let privateEdString = args[2];
+        if privateEdString.count == 128, let data = privateEdString.data(using: .utf8) {
+            let keys = Data(base64Encoded: data)
+            if let keys = keys {
+                return (keys[0..<64], keys[64...]);
+            }else{
+                print("Failed to decode keys.");
+                exit(1);
+            }
+        } else {
+            print("Warning: Private key not found in the argument. Please provide a valid key.");
+            exit(1);
+        }
+    }
+
+
     var item: CFTypeRef?;
     let res = SecItemCopyMatching([
         kSecClass as String: kSecClassGenericPassword,
@@ -56,8 +75,8 @@ func edSignature(data: Data, publicEdKey: Data, privateEdKey: Data) -> String {
 }
 
 let args = CommandLine.arguments;
-if args.count != 2 {
-    print("Usage: \(args[0]) <archive to sign>\nPrivavte EdDSA (ed25519) key is automatically read from the Keychain.\n");
+if args.count < 2 || args.count > 3 {
+    print("Usage: \(args[0]) <archive to sign>  [key]\nPrivavte EdDSA (ed25519) key is automatically read from the Keychain or passed on the command line\n");
     exit(1)
 }
 
